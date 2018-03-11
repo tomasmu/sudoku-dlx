@@ -6,112 +6,9 @@
 #include <fstream>
 #include <sstream>
 
-typedef std::vector<int> sudokurow;			//sudoku
-typedef std::vector<sudokurow> sudokugrid;	//sudoku
-const int BLANK_CELL_VALUE = -1;
-const char BLANK_CELL_CHAR = '.';
-
-//todo: perhaps move/rename/remove
-const bool HAS_VALUE = 1;	//constraint matrix
-const bool NO_VALUE = 0;	//constraint matrix
-
-const int MAX_SOLUTIONS = 3000;
-
-//generic node that acts as columnRoot, columnHeader, and dataNodes
-//used for doubly linked list that is circular in two dimensions (up/down and left/right)
-//could perhaps be split into struct Root, Header, Data; inheriting from struct Node
-
-const int ROW_HEADER = -1;
-const int COL_HEADER = -1;
-
-struct Node {
-public:				//used by; and why
-	Node *left;		//root, header, data
-	Node *right;	//root, header, data
-	Node *up;		//header, data
-	Node *down;		//header, data
-
-	int count = 0;		//header, data; count linked nodes in column
-
-	Node *columnHeader;	//data; point to head
-	int rowId;	//data; for getting solution
-	int colId;	//header; when creating linked list
-
-	Node() {
-		this->up = this;
-		this->down = this;
-		this->left = this;
-		this->right = this;
-
-		this->rowId = ROW_HEADER;
-		this->colId = COL_HEADER;
-	}
-
-	Node(int row, int col) : Node() {
-		this->rowId = row;
-		this->colId = col;
-	}
-
-	void AddHorizontalNode(Node &newNode) {		//root, data
-		newNode.right = this;			//1 new.right  = first
-		newNode.left = this->left;		//2 new.left   = last (first.left)
-		this->left->right = &newNode;	//3 last.right = new
-		this->left = &newNode;			//4 first.left = new
-	}
-
-	void AddVerticalDataNode(Node &newNode) {	//header
-		newNode.down = this;			//1 new.down  = first
-		newNode.up = this->up;			//2 new.up    = last (first.up)
-		this->up->down = &newNode;		//3 last.down = new
-		this->up = &newNode;			//4 first.up  = new
-
-		newNode.columnHeader = this;
-		this->count++;
-	}
-
-	void coverColumnAndRows() {		//header
-		this->coverHorizontalNode();		//cover column header
-		for (Node *data = this->down; data != this; data = data->down)	//and all row elements from intersecting columns
-			data->coverRow();
-	}
-	void uncoverColumnAndRows() {	//header
-		for (Node *data = this->up; data != this; data = data->up)
-			data->uncoverRow();
-		this->uncoverHorizontalNode();
-	}
-
-private:
-	void coverHorizontalNode() {	//(header)
-		this->right->left = this->left;
-		this->left->right = this->right;
-	}
-	void uncoverHorizontalNode() {
-		this->right->left = this;
-		this->left->right = this;
-	}
-
-	void coverVerticalNode() {	//(data)
-		this->down->up = this->up;
-		this->up->down = this->down;
-
-		columnHeader->count--;
-	}
-	void uncoverVerticalNode() {
-		this->down->up = this;
-		this->up->down = this;
-
-		columnHeader->count++;
-	}
-
-	void coverRow() {	//(header)
-		for (Node *data = this->right; data != this; data = data->right)
-			data->coverVerticalNode();
-	}
-	void uncoverRow() {
-		for (Node *data = this->left; data != this; data = data->left)
-			data->uncoverVerticalNode();
-	}
-};
+#include "Node.h"
+#include "Sudoku.h"
+#include "ConstraintMatrix.h"
 
 std::vector<Node*> solutionGuesses;			//global :(
 std::vector<std::vector<Node*>> solutionList;		//variables :(
@@ -166,66 +63,11 @@ void search(Node *columnRoot)
 	colHead->uncoverColumnAndRows();
 }
 
-std::vector<std::vector<bool>> createConstraintMatrix(sudokugrid sudoku) {
-	//most of these variables are for pedagogic reasons
-	//e.g.: rowLength, colLength, and digits will always be equal; but makes the code easier to understand
-	const int rowLength = sudoku.size();
-	const int colLength = sudoku[0].size();
-	const int boxLength = (int)(sqrt(rowLength) + 0.5);
-	const int gridSize = rowLength * colLength;
-	const int digits = rowLength;
+Node *createLinkedListFromSudoku(sudokuGrid sudoku) {
+	ConstraintMatrix constraintMatrix(sudoku);
 
-	const int sudokuConstraints = 4;
-	const int cellOffset = 0 * gridSize;
-	const int rowOffset = 1 * gridSize;
-	const int colOffset = 2 * gridSize;
-	const int boxOffset = 3 * gridSize;
-
-	const int candidateCount = digits * gridSize;				//constraint rows
-	const int constraintCount = sudokuConstraints * gridSize;	//constraint cols
-	std::vector<std::vector<bool>> constraintMatrix(candidateCount, std::vector<bool>(constraintCount, NO_VALUE));
-
-	//add constraints
-	for (int row = 0; row < rowLength; row++) {
-		for (int col = 0; col < colLength; col++) {
-			for (int num = 0; num < digits; num++) {
-				//add clues only if we have a blank, or when we have the correct clue
-				if (sudoku[row][col] == BLANK_CELL_VALUE || sudoku[row][col] == num) {
-					//all n^3 cell possibilities can be represented by row, col, num (RxCyNz, where x,y,z=1..n)
-					//this can be converted to base b (number of digits), Rx*b^2 + Cy*b + Nz
-					int candidateIndex = (row * digits * digits) + (col * digits) + num;
-
-					//four different constraints, with one of them fixed we have n^2 possibilities
-					//if we omit one term at a time we can map the values to n^2 unique values
-					//RnCn[Nn]	cell (row-column possibilities), number fixed
-					//Rn[Cn]Nn	row	(row-number possibilities), column fixed
-					//[Rn]CnNn	column (column-number possibilities), row fixed
-					//["Bn"]Nn	box	(box-number possibilities)
-					const int box = (row / boxLength) * boxLength + (col / boxLength);	//box 0..(n-1)
-
-					int cellIndex = cellOffset + row * digits + col;
-					int rowIndex = rowOffset + row * digits + num;
-					int colIndex = colOffset + col * digits + num;
-					int boxIndex = boxOffset + box * digits + num;
-
-					//four 1's (constraints) per row
-					constraintMatrix[candidateIndex][cellIndex] = HAS_VALUE;
-					constraintMatrix[candidateIndex][rowIndex] = HAS_VALUE;
-					constraintMatrix[candidateIndex][colIndex] = HAS_VALUE;
-					constraintMatrix[candidateIndex][boxIndex] = HAS_VALUE;
-				}
-			}
-		}
-	}
-
-	return constraintMatrix;
-}
-
-Node *createLinkedListFromSudoku(sudokugrid sudoku) {
-	std::vector<std::vector<bool>> constraintMatrix = createConstraintMatrix(sudoku);
-
-	const int rowSize = constraintMatrix.size();
-	const int colSize = constraintMatrix[0].size();
+	const int rowSize = constraintMatrix.rows();
+	const int colSize = constraintMatrix.cols();
 
 	//root for column headers that will be returned
 	Node *columnRoot = new Node(ROW_HEADER, COL_HEADER);
@@ -243,13 +85,13 @@ Node *createLinkedListFromSudoku(sudokugrid sudoku) {
 		//create dataNodes rowwise
 		for (Node *colHead = columnRoot->right; colHead != columnRoot; colHead = colHead->right) {
 			//create data node if constraintMatrix says so
-			if (constraintMatrix[row][colHead->colId] == HAS_VALUE) {
+			if (constraintMatrix.at(row, colHead->colId) == HAS_VALUE) {
 				Node *data = new Node(row, colHead->colId);
 				if (dataHead == nullptr)
 					dataHead = data;
 				else
 					dataHead->AddHorizontalNode(*data);
-
+				
 				colHead->AddVerticalDataNode(*data);
 			}
 		}
@@ -271,11 +113,11 @@ void deleteLinkedList(Node *list) {
 	delete list;
 }
 
-sudokugrid getSudokuFromSolution(std::vector<Node*> solution) {
+sudokuGrid getSudokuFromSolution(std::vector<Node*> solution) {
 	const unsigned int gridSize = solution.size();
 	const int gridLength = (int)(sqrt(gridSize + 0.5));
 	const int base = gridLength;
-	sudokugrid sudoku(gridLength, sudokurow(gridLength, BLANK_CELL_VALUE));
+	sudokuGrid sudoku(gridLength, sudokuRow(gridLength, BLANK_CELL_VALUE));
 
 	for (unsigned int i = 0; i < gridSize; i++) {
 		int temp = solution[i]->rowId;
@@ -318,13 +160,13 @@ int formatCellCharToInt(char digit, bool isZeroBased) {
 	return '?';
 }
 
-sudokugrid getSudokuFromString(const char *sudokuString, bool isZeroBased) {
+sudokuGrid getSudokuFromString(const char *sudokuString, bool isZeroBased) {
 	int gridLength = (int)(sqrt(strlen(sudokuString)) + 0.5);
 	int boxLength = (int)(sqrt(gridLength) + 0.5);
 	if (boxLength * boxLength * boxLength * boxLength != strlen(sudokuString)) {
 		std::cout << "WARNING! Input string is " << strlen(sudokuString) << " characters long, and not on the form n^4" << std::endl;
 	}
-	sudokugrid sudoku(gridLength, sudokurow(gridLength, BLANK_CELL_VALUE));
+	sudokuGrid sudoku(gridLength, sudokuRow(gridLength, BLANK_CELL_VALUE));
 
 	for (int row = 0; row < gridLength; row++) {
 		for (int col = 0; col < gridLength; col++) {
@@ -338,7 +180,7 @@ sudokugrid getSudokuFromString(const char *sudokuString, bool isZeroBased) {
 	return sudoku;
 }
 
-std::string getSudokuAsString(sudokugrid sudoku, bool isZeroBased) {
+std::string getSudokuAsString(sudokuGrid sudoku, bool isZeroBased) {
 	const int length = sudoku.size();
 	std::string result = "";
 	for (int row = 0; row < length; row++) {
@@ -351,7 +193,7 @@ std::string getSudokuAsString(sudokugrid sudoku, bool isZeroBased) {
 	return result;
 }
 
-void printSudoku(sudokugrid sudoku, const bool isZeroBased) {
+void printSudoku(sudokuGrid sudoku, const bool isZeroBased) {
 	//cout << "printing sudoku with iszerobased: " << (isZeroBased ? "true" : "false") << endl;
 	const int gridLength = sudoku.size();
 	const int boxLength = (int)(sqrt(gridLength) + 0.5);
@@ -387,12 +229,12 @@ void printAllSolutions(bool isZeroBased) {
 	}
 }
 
-bool isSolved(sudokugrid sudoku) {
+bool isSolved(sudokuGrid sudoku) {
 	//the set size for rows, cols, boxes should all be equal to sudoku size
 	return false;
 }
 
-bool isZeroBasedSudoku(sudokugrid sudoku) {
+bool isZeroBasedSudoku(sudokuGrid sudoku) {
 	//if we find a 0 it is zero based (if there's a 9 too then no solution is possible)
 	//0-to-8 sudoku with 0 missing, then that 0 could be a 9, so we default to 1
 	//1 and 9 cannot both be missing, that is ambiguous since they can swap freely, we can safely default to 1 with 9 gone
@@ -422,12 +264,12 @@ void solveFromFile(const char *filename) {
 			getline(lineStream, answer, ';');
 			lineStream >> puzzle;
 
-			sudokugrid sudokuToSolve = getSudokuFromString(puzzle.c_str(), isZeroBased);
+			sudokuGrid sudokuToSolve = getSudokuFromString(puzzle.c_str(), isZeroBased);
 			Node *list = createLinkedListFromSudoku(sudokuToSolve);
 			search(list);
-			deleteLinkedList(list);
 
-			sudokugrid solved = getSudokuFromSolution(solutionList[solutionList.size() - 1]);
+			sudokuGrid solved = getSudokuFromSolution(solutionList[solutionList.size() - 1]);
+			deleteLinkedList(list);
 			std::string solvedAsString = getSudokuAsString(solved, isZeroBased);
 			std::string originalPuzzle = getSudokuAsString(sudokuToSolve, isZeroBased);
 			outFile << solvedAsString << ";" << originalPuzzle << std::endl;
@@ -470,7 +312,7 @@ int main(int argc, char *argv[]) {
 			auto startTime = std::chrono::high_resolution_clock::now();
 
 			bool isZeroBased = isZeroBasedString(argument);
-			sudokugrid sudokuToSolve = getSudokuFromString(argument, isZeroBased);
+			sudokuGrid sudokuToSolve = getSudokuFromString(argument, isZeroBased);
 			Node *list = createLinkedListFromSudoku(sudokuToSolve);
 			search(list);
 
@@ -484,33 +326,33 @@ int main(int argc, char *argv[]) {
 	}
 
 	//example sudokus
-	sudokugrid two_sudoku_0clues = getSudokuFromString("................", false);
-	sudokugrid two_sudoku_1missing = getSudokuFromString("132424134132324.", false);
+	sudokuGrid two_sudoku_0clues = getSudokuFromString("................", false);
+	sudokuGrid two_sudoku_1missing = getSudokuFromString("132424134132324.", false);
 
-	sudokugrid three_sudoku_17clues_worstBacktrackCase = getSudokuFromString("..............3.85..1.2.......5.7.....4...1...9.......5......73..2.1........4...9", false);
-	sudokugrid three_sudoku_empty = getSudokuFromString(".................................................................................", false);
-	sudokugrid three_sudoku_4clues_2solutions = getSudokuFromString("8356179426124957387..2386511..763825367582194258149367571926483486351279923874516", false);
+	sudokuGrid three_sudoku_17clues_worstBacktrackCase = getSudokuFromString("..............3.85..1.2.......5.7.....4...1...9.......5......73..2.1........4...9", false);
+	sudokuGrid three_sudoku_empty = getSudokuFromString(".................................................................................", false);
+	sudokuGrid three_sudoku_4clues_2solutions = getSudokuFromString("8356179426124957387..2386511..763825367582194258149367571926483486351279923874516", false);
 
-	sudokugrid four_sudoku_8solutions = getSudokuFromString(".5..6..E.F.C....B.0.24...1.35.E..E...D.15.........9F..C...2..418.02.F3E..97...4.6C4D......1.E2.....5....B8..7DF.F.....D.3.A....90....E.C.B.....F.2DC..73....8.....F3.8......27BA.8...2A..3FD.19.DAB..C...E..19.........28.C...D..9.E8.5...BAF..6..C.E.B.7..9..2.", true);
-	sudokugrid four_sudoku_77clues = getSudokuFromString("5...3....BF.4..8...4..D6..E....3..1....2.........6..5.....21.....F.3.1...7.2.6...C4.A7.B...5E....2....4.6D..378.8....C...4...9D1..........46B.72D..5..A3C.......4........37.1..6..A8...D.....F.4.8...51..2.......A6.....7..3F.......4.C..5....3...........1.....", true);
-	sudokugrid four_sudoku_55clues = getSudokuFromString("...9.....3.....2....F..C0....A.8.4.5.....9.............A..D....F..8............0.....5..........A.F............C.....D9..4....7.....0..E.........5.4.....7.B1D9....3.....1..5.4.....A..F........F.0.....8.A....E.....14.....2.5.8.......C.0..........973......1.", true);
-	sudokugrid four_sudoku_54clues_ambiguous = getSudokuFromString(".........2.....1....E..BF....9.7.3.4.....8.............9..C....E..7............F.....4..........9.E............B.....C8..3....6.....F..D.........4.3.....6.A0C8....2.....0..4.3.....9..E........E.F.....7.9....D.....03.....1.4.7.......B.F..........862......0.", true);
+	sudokuGrid four_sudoku_8solutions = getSudokuFromString(".5..6..E.F.C....B.0.24...1.35.E..E...D.15.........9F..C...2..418.02.F3E..97...4.6C4D......1.E2.....5....B8..7DF.F.....D.3.A....90....E.C.B.....F.2DC..73....8.....F3.8......27BA.8...2A..3FD.19.DAB..C...E..19.........28.C...D..9.E8.5...BAF..6..C.E.B.7..9..2.", true);
+	sudokuGrid four_sudoku_77clues = getSudokuFromString("5...3....BF.4..8...4..D6..E....3..1....2.........6..5.....21.....F.3.1...7.2.6...C4.A7.B...5E....2....4.6D..378.8....C...4...9D1..........46B.72D..5..A3C.......4........37.1..6..A8...D.....F.4.8...51..2.......A6.....7..3F.......4.C..5....3...........1.....", true);
+	sudokuGrid four_sudoku_55clues = getSudokuFromString("...9.....3.....2....F..C0....A.8.4.5.....9.............A..D....F..8............0.....5..........A.F............C.....D9..4....7.....0..E.........5.4.....7.B1D9....3.....1..5.4.....A..F........F.0.....8.A....E.....14.....2.5.8.......C.0..........973......1.", true);
+	sudokuGrid four_sudoku_54clues_ambiguous = getSudokuFromString(".........2.....1....E..BF....9.7.3.4.....8.............9..C....E..7............F.....4..........9.E............B.....C8..3....6.....F..D.........4.3.....6.A0C8....2.....0..4.3.....9..E........E.F.....7.9....D.....03.....1.4.7.......B.F..........862......0.", true);
 
 	bool canHasBenchmark = true;
 	if (canHasBenchmark) {
 		std::cout << "benchmarking.." << std::endl;
 
-		//sudokugrid sudokuToSolve = four_sudoku_77clues;
-		//sudokugrid sudokuToSolve = three_sudoku_4clues_2solutions;
-		sudokugrid sudokuToSolve = three_sudoku_17clues_worstBacktrackCase;
+		//sudokuGrid sudokuToSolve = four_sudoku_77clues;
+		//sudokuGrid sudokuToSolve = three_sudoku_4clues_2solutions;
+		sudokuGrid sudokuToSolve = three_sudoku_17clues_worstBacktrackCase;
 
 		bool isZeroBased = isZeroBasedSudoku(sudokuToSolve);
 		printSudoku(sudokuToSolve, isZeroBased);
 
-			for (int numberOfRuns = 0; numberOfRuns < 5; numberOfRuns++) {
+		for (int numberOfRuns = 0; numberOfRuns < 5; numberOfRuns++) {
 			auto startTime = std::chrono::high_resolution_clock::now();
 
-			for (int solvesPerIteration = 0; solvesPerIteration < 1000; solvesPerIteration++) {
+			for (int solvesPerIteration = 0; solvesPerIteration < 100; solvesPerIteration++) {
 				solutionGuesses.clear();
 				solutionList.clear();
 				Node *list = createLinkedListFromSudoku(sudokuToSolve);

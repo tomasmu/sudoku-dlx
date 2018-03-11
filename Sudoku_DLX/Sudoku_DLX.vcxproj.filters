@@ -27,6 +27,12 @@
     <ClInclude Include="ToroidalLinkedList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Node.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sudoku.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
