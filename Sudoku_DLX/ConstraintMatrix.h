@@ -1,17 +1,29 @@
 #pragma once
-
 #include "Sudoku.h"
 
-const bool HAS_VALUE = 1;
-const bool NO_VALUE = 0;
+typedef bool matrixCell;
+typedef std::vector<matrixCell> matrixRow;
+typedef std::vector<matrixRow> matrixGrid;
+
+const matrixCell HAS_VALUE = true;	//remove later
+const matrixCell NO_VALUE = false;	//remove later
 
 class ConstraintMatrix {
 public:
 	ConstraintMatrix(sudokuGrid sudoku);
-	bool at(int row, int col);
+	matrixCell at(int row, int col);
 	int rows();
 	int cols();
 
 private:
-	std::vector<std::vector<bool>> _matrix;
+	matrixGrid _matrix;
+
+	//void initMatrix(Sudoku sudoku) {
+	void initMatrix(sudokuGrid sudoku);
+
+	int _rows;
+	int _cols;
+
+	const matrixCell HAS_VALUE = true;
+	const matrixCell NO_VALUE = false;
 };

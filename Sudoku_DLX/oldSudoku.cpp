@@ -10,8 +10,17 @@
 #include "Sudoku.h"
 #include "ConstraintMatrix.h"
 
-std::vector<Node*> solutionGuesses;			//global :(
-std::vector<std::vector<Node*>> solutionList;		//variables :(
+//memory leak analysis
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+#ifdef _DEBUG
+	#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+	#define new DEBUG_NEW
+#endif
+
+std::vector<Node*> solutionGuesses;				//global :(
+std::vector<std::vector<Node*>> solutionList;	//variables :(
 
 Node *findMinColumn(Node *columnRoot) {
 	Node *min = columnRoot->right;
@@ -27,8 +36,7 @@ void search(Node *columnRoot)
 	//column list is empty, we have found a solution
 	if (columnRoot->right == columnRoot) {
 		solutionList.push_back(solutionGuesses);
-		//printSolution();
-		return;
+		return;	//crt{48546, 48 bytes}
 	}
 
 	Node *colHead = findMinColumn(columnRoot);
@@ -45,7 +53,7 @@ void search(Node *columnRoot)
 		solutionGuesses.push_back(dataRow);
 
 		//cover columns with intersecting rows
-		for (Node *dataCol = dataRow->right; dataCol != dataRow; dataCol = dataCol->right)
+		for (Node *dataCol = dataRow->right; dataCol != dataRow; dataCol = dataCol->right) //crt{5011, 376 bytes}
 			dataCol->columnHeader->coverColumnAndRows();
 
 		//with conditional recursion, instead of aborting, we backtrack and leave original list intact
@@ -235,10 +243,7 @@ bool isSolved(sudokuGrid sudoku) {
 }
 
 bool isZeroBasedSudoku(sudokuGrid sudoku) {
-	//if we find a 0 it is zero based (if there's a 9 too then no solution is possible)
-	//0-to-8 sudoku with 0 missing, then that 0 could be a 9, so we default to 1
-	//1 and 9 cannot both be missing, that is ambiguous since they can swap freely, we can safely default to 1 with 9 gone
-	//conclusion: if (0 in sudoku) true, else false
+	//is considered zero based only if it contains a zero
 	for (unsigned int row = 0; row < sudoku.size(); row++)
 		for (unsigned int col = 0; col < sudoku.size(); col++)
 			if (sudoku[row][col] == 0)
@@ -248,11 +253,11 @@ bool isZeroBasedSudoku(sudokuGrid sudoku) {
 }
 
 bool isZeroBasedString(const char* sudokuString) {
+	//is considered zero based only if it contains a zero
 	return strpbrk(sudokuString, "0") != 0;
 }
 
 void solveFromFile(const char *filename) {
-	bool isZeroBased = isZeroBasedString(filename);
 	auto startTime = std::chrono::high_resolution_clock::now();
 	std::string answer, puzzle;
 	std::ifstream sudokuFile;
@@ -264,15 +269,24 @@ void solveFromFile(const char *filename) {
 			getline(lineStream, answer, ';');
 			lineStream >> puzzle;
 
+			bool isZeroBased = isZeroBasedString(puzzle.c_str());
 			sudokuGrid sudokuToSolve = getSudokuFromString(puzzle.c_str(), isZeroBased);
 			Node *list = createLinkedListFromSudoku(sudokuToSolve);
 			search(list);
 
-			sudokuGrid solved = getSudokuFromSolution(solutionList[solutionList.size() - 1]);
+			if (solutionList.size() > 0) {
+				sudokuGrid solved = getSudokuFromSolution(solutionList[solutionList.size() - 1]);
+				std::string solvedAsString = getSudokuAsString(solved, isZeroBased);
+				std::string originalPuzzle = getSudokuAsString(sudokuToSolve, isZeroBased);
+				outFile << solvedAsString << ";" << originalPuzzle << std::endl;
+			}
+			else {
+				std::cout << "error: " << puzzle.c_str() << std::endl;
+			}
+
+			solutionGuesses.clear();
+			solutionList.clear();
 			deleteLinkedList(list);
-			std::string solvedAsString = getSudokuAsString(solved, isZeroBased);
-			std::string originalPuzzle = getSudokuAsString(sudokuToSolve, isZeroBased);
-			outFile << solvedAsString << ";" << originalPuzzle << std::endl;
 		}
 	}
 
@@ -291,6 +305,18 @@ bool isFilePath(const char* filename) {
 }
 
 int main(int argc, char *argv[]) {
+	int crtFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
+	crtFlag |= _CRTDBG_DELAY_FREE_MEM_DF;
+	crtFlag |= _CRTDBG_ALLOC_MEM_DF;
+	crtFlag |= _CRTDBG_LEAK_CHECK_DF;
+	_CrtSetDbgFlag(crtFlag);
+#ifdef _DEBUG
+	//crt {160, 8 bytes}, {159, 8 bytes} - todo: not found, investigate later
+	//crt {5011, 376 bytes}, {5012, 16 bytes} - todo: investigate after restructuring
+	_crtBreakAlloc = 159;
+#endif // _DEBUG
+	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
+
 	std::cout << "hello world!" << std::endl;
 
 	if (argc > 1) {
@@ -306,6 +332,7 @@ int main(int argc, char *argv[]) {
 			}
 
 			std::cout << "solutions found: " << solutionList.size() << std::endl;
+			solutionList.clear();
 		}
 		else {	//wasn't a file, probably sudoku? absolutely not /help or something
 			std::cout << "argument: " << argument << std::endl;
@@ -326,6 +353,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	//example sudokus
+	/*
 	sudokuGrid two_sudoku_0clues = getSudokuFromString("................", false);
 	sudokuGrid two_sudoku_1missing = getSudokuFromString("132424134132324.", false);
 
@@ -338,7 +366,7 @@ int main(int argc, char *argv[]) {
 	sudokuGrid four_sudoku_55clues = getSudokuFromString("...9.....3.....2....F..C0....A.8.4.5.....9.............A..D....F..8............0.....5..........A.F............C.....D9..4....7.....0..E.........5.4.....7.B1D9....3.....1..5.4.....A..F........F.0.....8.A....E.....14.....2.5.8.......C.0..........973......1.", true);
 	sudokuGrid four_sudoku_54clues_ambiguous = getSudokuFromString(".........2.....1....E..BF....9.7.3.4.....8.............9..C....E..7............F.....4..........9.E............B.....C8..3....6.....F..D.........4.3.....6.A0C8....2.....0..4.3.....9..E........E.F.....7.9....D.....03.....1.4.7.......B.F..........862......0.", true);
 
-	bool canHasBenchmark = true;
+	bool canHasBenchmark = false;
 	if (canHasBenchmark) {
 		std::cout << "benchmarking.." << std::endl;
 
@@ -365,13 +393,16 @@ int main(int argc, char *argv[]) {
 			printf("%f ms\n", 1000 * programDuration.count());
 		}
 	}
+	*/
 
 	//temporary, to keep program open
-	bool noArgumentsSupplied = argc == 1;
-	if (noArgumentsSupplied || true) {
-		system("pause");	//windows
-		//system("read");		//mac/linux
-	}
+	//bool noArgumentsSupplied = argc == 1;
+	//if (noArgumentsSupplied || true) {
+	//	system("pause");	//windows
+	//	//system("read");		//mac/linux
+	//}
+
+	_CrtDumpMemoryLeaks();
 
 	return 0;
 }

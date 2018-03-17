@@ -22,6 +22,7 @@ void Node::AddHorizontalNode(Node &newNode) {
 	this->left->right = &newNode;
 	this->left = &newNode;
 }
+
 void Node::AddVerticalDataNode(Node &newNode) {
 	newNode.down = this;
 	newNode.up = this->up;
@@ -37,6 +38,7 @@ void Node::coverColumnAndRows() {
 	for (Node *data = this->down; data != this; data = data->down)
 		data->coverRow();
 }
+
 void Node::uncoverColumnAndRows() {
 	for (Node *data = this->up; data != this; data = data->up)
 		data->uncoverRow();
@@ -47,6 +49,7 @@ void Node::coverHorizontalNode() {
 	this->right->left = this->left;
 	this->left->right = this->right;
 }
+
 void Node::uncoverHorizontalNode() {
 	this->right->left = this;
 	this->left->right = this;
@@ -58,6 +61,7 @@ void Node::coverVerticalNode() {
 
 	columnHeader->count--;
 }
+
 void Node::uncoverVerticalNode() {
 	this->down->up = this;
 	this->up->down = this;
@@ -65,10 +69,11 @@ void Node::uncoverVerticalNode() {
 	columnHeader->count++;
 }
 
-void Node::coverRow() {	//(header)
+void Node::coverRow() {
 	for (Node *data = this->right; data != this; data = data->right)
 		data->coverVerticalNode();
 }
+
 void Node::uncoverRow() {
 	for (Node *data = this->left; data != this; data = data->left)
 		data->uncoverVerticalNode();

@@ -1,37 +1,34 @@
 #include "stdafx.h"
-#include <vector>
+#include "Sudoku.h"
 
-typedef std::vector<int> SudokuGrid;
+Sudoku::Sudoku(const char *sudoku) {
+	_cellCount = _grid.size();
+	_dimension = (int)sqrt(_grid.size());
+	//parse sudoku
+}
 
-class Sudoku {
-public:
-	Sudoku(const char *sudoku) {
-		_count = _grid.size();
-		_size = (int)sqrt(_grid.size());
-	}
-	
-	void Solve(int maxSolutions = 1);
+void Sudoku::Solve(int maxSolutions = 1) {
+}
 
-	void Print();
+void Sudoku::Print() {
+}
 
-	int operator[] (const int index) {
-		return _grid[index];
-	}
+sudokuCell Sudoku::at(const int index) {
+	return _grid[index / _dimension][index % _dimension];
+}
 
-	int at(const int index) {
-		return _grid[index];
-	}
+sudokuCell Sudoku::at(const int row, const int col) {
+	return _grid[row][col];
+}
 
-	int at(const int row, const int col) {
-		return _grid[row * _size + col];
-	}
+int Sudoku::rowLength() {
+	return _grid.size();
+}
 
-private:
-	SudokuGrid _grid;
-	std::vector<SudokuGrid> solutions;
+int Sudoku::colLength() {
+	return _grid[0].size();
+}
 
-	int _count;
-	int _size;
-
-	bool _isZeroBased;
-};
+int Sudoku::boxLength() {
+	return (int)(sqrt(rowLength()) + 0.5);
+}
