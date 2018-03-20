@@ -9,6 +9,7 @@
 #include "Node.h"
 #include "Sudoku.h"
 #include "ConstraintMatrix.h"
+#include "ToroidalLinkedList.h"
 
 //memory leak analysis
 #define _CRTDBG_MAP_ALLOC
@@ -19,8 +20,8 @@
 	#define new DEBUG_NEW
 #endif
 
-std::vector<Node*> solutionGuesses;				//global :(
-std::vector<std::vector<Node*>> solutionList;	//variables :(
+solution solutionGuesses;	//global :(
+solutionList solutions;		//variables :(
 
 Node *findMinColumn(Node *columnRoot) {
 	Node *min = columnRoot->right;
@@ -35,8 +36,8 @@ void search(Node *columnRoot)
 {
 	//column list is empty, we have found a solution
 	if (columnRoot->right == columnRoot) {
-		solutionList.push_back(solutionGuesses);
-		return;	//crt{48546, 48 bytes}
+		solutions.push_back(solutionGuesses);
+		return;	//crt{5012, 48 bytes}
 	}
 
 	Node *colHead = findMinColumn(columnRoot);
@@ -58,7 +59,7 @@ void search(Node *columnRoot)
 
 		//with conditional recursion, instead of aborting, we backtrack and leave original list intact
 		//then we can safely delete all nodes from memory
-		if (solutionList.size() < MAX_SOLUTIONS)
+		if (solutions.size() < MAX_SOLUTIONS)
 			search(columnRoot);
 		
 		//backtrack
@@ -230,10 +231,10 @@ void printSudoku(sudokuGrid sudoku, const bool isZeroBased) {
 }
 
 void printAllSolutions(bool isZeroBased) {
-	std::cout << "solutions found: " << solutionList.size() << std::endl;
-	for (unsigned int i = 0; i < solutionList.size() && solutionList.size() != 0; i++) {
+	std::cout << "solutions found: " << solutions.size() << std::endl;
+	for (unsigned int i = 0; i < solutions.size() && solutions.size() != 0; i++) {
 		std::cout << "printing solution [" << i << "]" << std::endl;
-		printSudoku(getSudokuFromSolution(solutionList[i]), isZeroBased);
+		printSudoku(getSudokuFromSolution(solutions[i]), isZeroBased);
 	}
 }
 
@@ -274,8 +275,8 @@ void solveFromFile(const char *filename) {
 			Node *list = createLinkedListFromSudoku(sudokuToSolve);
 			search(list);
 
-			if (solutionList.size() > 0) {
-				sudokuGrid solved = getSudokuFromSolution(solutionList[solutionList.size() - 1]);
+			if (solutions.size() > 0) {
+				sudokuGrid solved = getSudokuFromSolution(solutions[solutions.size() - 1]);
 				std::string solvedAsString = getSudokuAsString(solved, isZeroBased);
 				std::string originalPuzzle = getSudokuAsString(sudokuToSolve, isZeroBased);
 				outFile << solvedAsString << ";" << originalPuzzle << std::endl;
@@ -285,7 +286,7 @@ void solveFromFile(const char *filename) {
 			}
 
 			solutionGuesses.clear();
-			solutionList.clear();
+			solutions.clear();
 			deleteLinkedList(list);
 		}
 	}
@@ -312,7 +313,7 @@ int main(int argc, char *argv[]) {
 	_CrtSetDbgFlag(crtFlag);
 #ifdef _DEBUG
 	//crt {160, 8 bytes}, {159, 8 bytes} - todo: not found, investigate later
-	//crt {5011, 376 bytes}, {5012, 16 bytes} - todo: investigate after restructuring
+	//crt {5011, 376 bytes, solutionGuesses?}, {5012, 16 bytes, solutionList?} - todo: investigate after restructuring
 	_crtBreakAlloc = 159;
 #endif // _DEBUG
 	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
@@ -326,13 +327,13 @@ int main(int argc, char *argv[]) {
 		if (isFilePath(argument)) {
 			solveFromFile(argument);
 
-			if (solutionList.size() > 0) {
+			if (solutions.size() > 0) {
 				//bool isZeroBased = isZeroBasedSudoku(getSudokuFromSolution(solutionList[0]));
 				//printAllSolutions(isZeroBased);
 			}
 
-			std::cout << "solutions found: " << solutionList.size() << std::endl;
-			solutionList.clear();
+			std::cout << "solutions found: " << solutions.size() << std::endl;
+			solutions.clear();
 		}
 		else {	//wasn't a file, probably sudoku? absolutely not /help or something
 			std::cout << "argument: " << argument << std::endl;

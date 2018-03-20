@@ -7,7 +7,7 @@ ConstraintMatrix::ConstraintMatrix(sudokuGrid sudoku) {
 	initMatrix(sudoku);
 }
 
-//void ConstraintMatrix::initMatrix(Sudoku sudoku) {	//implement Sudoku first, return matrix and not void
+//void ConstraintMatrix::initMatrix(Sudoku sudoku) {	//implement Sudoku
 void ConstraintMatrix::initMatrix(sudokuGrid sudoku) {
 	//most of these variables are for pedagogic reasons
 	//e.g.: rowLength, colLength, and digits will always be equal; but makes the code easier to understand
@@ -16,6 +16,7 @@ void ConstraintMatrix::initMatrix(sudokuGrid sudoku) {
 	//const int rowLength = sudoku.rowLength();
 	//const int colLength = sudoku.colLength();
 	//const int boxLength = sudoku.boxLength();
+	//const int cellCount = sudoku.cellCount();
 	const int boxLength = (int)(sqrt(rowLength) + 0.5);
 	const int cellCount = rowLength * colLength;
 	const int digits = rowLength;
@@ -63,6 +64,6 @@ int ConstraintMatrix::cols() {
 	return _matrix[0].size();
 }
 
-matrixCell ConstraintMatrix::at(int row, int col) {
+matrixCell ConstraintMatrix::at(const int row, const int col) {
 	return _matrix[row][col];
 }

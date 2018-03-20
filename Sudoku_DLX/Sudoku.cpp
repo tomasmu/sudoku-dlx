@@ -32,3 +32,6 @@ int Sudoku::colLength() {
 int Sudoku::boxLength() {
 	return (int)(sqrt(rowLength()) + 0.5);
 }
+int Sudoku::cellCount() {
+	return rowLength() * colLength();
+ }

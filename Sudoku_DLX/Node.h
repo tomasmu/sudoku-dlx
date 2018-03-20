@@ -35,7 +35,4 @@ private:
 	void uncoverVerticalNode();
 	void coverRow();
 	void uncoverRow();
-
-	const int ROW_HEADER = -1;
-	const int COL_HEADER = -1;
 };
