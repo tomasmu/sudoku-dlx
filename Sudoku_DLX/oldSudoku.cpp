@@ -20,107 +20,107 @@
 	#define new DEBUG_NEW
 #endif
 
-solution solutionGuesses;	//global :(
-solutionList solutions;		//variables :(
+//solution solutionGuesses;	//global :(
+//solutionList solutions;		//variables :(
 
-Node *findMinColumn(Node *columnRoot) {
-	Node *min = columnRoot->right;
-	for (Node *colHead = min->right; colHead != columnRoot; colHead = colHead->right)
-		if (colHead->count < min->count)
-			min = colHead;
+//Node *findMinColumn(Node *columnRoot) {
+//	Node *min = columnRoot->right;
+//	for (Node *colHead = min->right; colHead != columnRoot; colHead = colHead->right)
+//		if (colHead->count < min->count)
+//			min = colHead;
+//
+//	return min;
+//}
 
-	return min;
-}
+//void search(Node *columnRoot)
+//{
+//	//column list is empty, we have found a solution
+//	if (columnRoot->right == columnRoot) {
+//		solutions.push_back(solutionGuesses);
+//		return;	//crt{5012, 48 bytes}
+//	}
+//
+//	Node *colHead = findMinColumn(columnRoot);
+//
+//	if (colHead->count == 0)	//unsolvable, backtrack
+//		return;
+//
+//	//cover column
+//	colHead->coverColumnAndRows();
+//
+//	//loop vertical nodes
+//	for (Node *dataRow = colHead->down; dataRow != colHead; dataRow = dataRow->down) {
+//		//assume row is part of the solution, add to list
+//		solutionGuesses.push_back(dataRow);
+//
+//		//cover columns with intersecting rows
+//		for (Node *dataCol = dataRow->right; dataCol != dataRow; dataCol = dataCol->right) //crt{5011, 376 bytes}
+//			dataCol->columnHeader->coverColumnAndRows();
+//
+//		//with conditional recursion, instead of aborting, we backtrack and leave original list intact
+//		//then we can safely delete all nodes from memory
+//		if (solutions.size() < MAX_SOLUTIONS)
+//			search(columnRoot);
+//		
+//		//backtrack
+//		for (Node *dataCol = dataRow->left; dataCol != dataRow; dataCol = dataCol->left)
+//			dataCol->columnHeader->uncoverColumnAndRows();
+//
+//		solutionGuesses.pop_back();
+//	}
+//
+//	colHead->uncoverColumnAndRows();
+//}
 
-void search(Node *columnRoot)
-{
-	//column list is empty, we have found a solution
-	if (columnRoot->right == columnRoot) {
-		solutions.push_back(solutionGuesses);
-		return;	//crt{5012, 48 bytes}
-	}
-
-	Node *colHead = findMinColumn(columnRoot);
-
-	if (colHead->count == 0)	//unsolvable, backtrack
-		return;
-
-	//cover column
-	colHead->coverColumnAndRows();
-
-	//loop vertical nodes
-	for (Node *dataRow = colHead->down; dataRow != colHead; dataRow = dataRow->down) {
-		//assume row is part of the solution, add to list
-		solutionGuesses.push_back(dataRow);
-
-		//cover columns with intersecting rows
-		for (Node *dataCol = dataRow->right; dataCol != dataRow; dataCol = dataCol->right) //crt{5011, 376 bytes}
-			dataCol->columnHeader->coverColumnAndRows();
-
-		//with conditional recursion, instead of aborting, we backtrack and leave original list intact
-		//then we can safely delete all nodes from memory
-		if (solutions.size() < MAX_SOLUTIONS)
-			search(columnRoot);
-		
-		//backtrack
-		for (Node *dataCol = dataRow->left; dataCol != dataRow; dataCol = dataCol->left)
-			dataCol->columnHeader->uncoverColumnAndRows();
-
-		solutionGuesses.pop_back();
-	}
-
-	colHead->uncoverColumnAndRows();
-}
-
-Node *createLinkedListFromSudoku(sudokuGrid sudoku) {
-	ConstraintMatrix constraintMatrix(sudoku);
-
-	const int rowSize = constraintMatrix.rows();
-	const int colSize = constraintMatrix.cols();
-
-	//root for column headers that will be returned
-	Node *columnRoot = new Node(ROW_HEADER, COL_HEADER);
-
-	//create column header row
-	for (int col = 0; col < colSize; col++) {
-		Node *colHead = new Node(ROW_HEADER, col);
-		columnRoot->AddHorizontalNode(*colHead);
-	}
-
-	//create dataNode rows
-	for (int row = 0; row < rowSize; row++) {
-		//pretend first existing dataNode on each row is a row header, so we can append nodes horizontally
-		Node *dataHead = nullptr;
-		//create dataNodes rowwise
-		for (Node *colHead = columnRoot->right; colHead != columnRoot; colHead = colHead->right) {
-			//create data node if constraintMatrix says so
-			if (constraintMatrix.at(row, colHead->colId) == HAS_VALUE) {
-				Node *data = new Node(row, colHead->colId);
-				if (dataHead == nullptr)
-					dataHead = data;
-				else
-					dataHead->AddHorizontalNode(*data);
-				
-				colHead->AddVerticalDataNode(*data);
-			}
-		}
-	}
-
-	return columnRoot;
-}
+//Node *createLinkedListFromSudoku(sudokuGrid sudoku) {
+//	ConstraintMatrix constraintMatrix(sudoku);
+//
+//	const int rowSize = constraintMatrix.rows();
+//	const int colSize = constraintMatrix.cols();
+//
+//	//root for column headers that will be returned
+//	Node *columnRoot = new Node(ROW_HEADER, COL_HEADER);
+//
+//	//create column header row
+//	for (int col = 0; col < colSize; col++) {
+//		Node *colHead = new Node(ROW_HEADER, col);
+//		columnRoot->AddHorizontalNode(*colHead);
+//	}
+//
+//	//create dataNode rows
+//	for (int row = 0; row < rowSize; row++) {
+//		//pretend first existing dataNode on each row is a row header, so we can append nodes horizontally
+//		Node *dataHead = nullptr;
+//		//create dataNodes rowwise
+//		for (Node *colHead = columnRoot->right; colHead != columnRoot; colHead = colHead->right) {
+//			//create data node if constraintMatrix says so
+//			if (constraintMatrix.at(row, colHead->colId) == HAS_VALUE) {
+//				Node *data = new Node(row, colHead->colId);
+//				if (dataHead == nullptr)
+//					dataHead = data;
+//				else
+//					dataHead->AddHorizontalNode(*data);
+//				
+//				colHead->AddVerticalDataNode(*data);
+//			}
+//		}
+//	}
+//
+//	return columnRoot;
+//}
 
 //avoid memory leaks :)
-void deleteLinkedList(Node *list) {
-	Node *deleteHead, *deleteData;
-	for (Node *colHead = list->right; colHead != list; colHead = colHead->right, delete deleteHead) {
-		deleteHead = colHead;
-		for (Node *data = colHead->down; data != colHead; data = data->down, delete deleteData) {
-			deleteData = data;
-		}
-	}
-
-	delete list;
-}
+//void deleteLinkedList(Node *list) {
+//	Node *deleteHead, *deleteData;
+//	for (Node *colHead = list->right; colHead != list; colHead = colHead->right, delete deleteHead) {
+//		deleteHead = colHead;
+//		for (Node *data = colHead->down; data != colHead; data = data->down, delete deleteData) {
+//			deleteData = data;
+//		}
+//	}
+//
+//	delete list;
+//}
 
 sudokuGrid getSudokuFromSolution(std::vector<Node*> solution) {
 	const unsigned int gridSize = solution.size();
@@ -155,6 +155,7 @@ char formatCellIntToChar(int digit, bool isZeroBased) {
 
 	return '?';
 }
+
 int formatCellCharToInt(char digit, bool isZeroBased) {
 	if (digit == BLANK_CELL_CHAR)
 		return BLANK_CELL_VALUE;
@@ -203,7 +204,6 @@ std::string getSudokuAsString(sudokuGrid sudoku, bool isZeroBased) {
 }
 
 void printSudoku(sudokuGrid sudoku, const bool isZeroBased) {
-	//cout << "printing sudoku with iszerobased: " << (isZeroBased ? "true" : "false") << endl;
 	const int gridLength = sudoku.size();
 	const int boxLength = (int)(sqrt(gridLength) + 0.5);
 
@@ -230,13 +230,14 @@ void printSudoku(sudokuGrid sudoku, const bool isZeroBased) {
 	delete gridLine;
 }
 
-void printAllSolutions(bool isZeroBased) {
-	std::cout << "solutions found: " << solutions.size() << std::endl;
-	for (unsigned int i = 0; i < solutions.size() && solutions.size() != 0; i++) {
-		std::cout << "printing solution [" << i << "]" << std::endl;
-		printSudoku(getSudokuFromSolution(solutions[i]), isZeroBased);
-	}
-}
+//todo
+//void printAllSolutions(bool isZeroBased) {
+//	std::cout << "solutions found: " << solutions.size() << std::endl;
+//	for (unsigned int i = 0; i < solutions.size() && solutions.size() != 0; i++) {
+//		std::cout << "printing solution [" << i << "]" << std::endl;
+//		printSudoku(getSudokuFromSolution(solutions[i]), isZeroBased);
+//	}
+//}
 
 bool isSolved(sudokuGrid sudoku) {
 	//the set size for rows, cols, boxes should all be equal to sudoku size
@@ -272,8 +273,13 @@ void solveFromFile(const char *filename) {
 
 			bool isZeroBased = isZeroBasedString(puzzle.c_str());
 			sudokuGrid sudokuToSolve = getSudokuFromString(puzzle.c_str(), isZeroBased);
-			Node *list = createLinkedListFromSudoku(sudokuToSolve);
-			search(list);
+			//Node *list = createLinkedListFromSudoku(sudokuToSolve);
+			//search(list);
+
+			//temp
+			auto test = new ToroidalLinkedList(sudokuToSolve);
+			test->solve(2);
+			auto solutions = test->_solutions;
 
 			if (solutions.size() > 0) {
 				sudokuGrid solved = getSudokuFromSolution(solutions[solutions.size() - 1]);
@@ -285,9 +291,10 @@ void solveFromFile(const char *filename) {
 				std::cout << "error: " << puzzle.c_str() << std::endl;
 			}
 
-			solutionGuesses.clear();
-			solutions.clear();
-			deleteLinkedList(list);
+			//solutionGuesses.clear();
+			//solutions.clear();
+			//deleteLinkedList(list);
+			delete test;
 		}
 	}
 
@@ -314,7 +321,8 @@ int main(int argc, char *argv[]) {
 #ifdef _DEBUG
 	//crt {160, 8 bytes}, {159, 8 bytes} - todo: not found, investigate later
 	//crt {5011, 376 bytes, solutionGuesses?}, {5012, 16 bytes, solutionList?} - todo: investigate after restructuring
-	_crtBreakAlloc = 159;
+	//_crtBreakAlloc = 159;
+	_crtBreakAlloc = 999999;
 #endif // _DEBUG
 	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
 
@@ -327,13 +335,13 @@ int main(int argc, char *argv[]) {
 		if (isFilePath(argument)) {
 			solveFromFile(argument);
 
-			if (solutions.size() > 0) {
-				//bool isZeroBased = isZeroBasedSudoku(getSudokuFromSolution(solutionList[0]));
-				//printAllSolutions(isZeroBased);
-			}
+			//if (solutions.size() > 0) {
+			//	//bool isZeroBased = isZeroBasedSudoku(getSudokuFromSolution(solutionList[0]));
+			//	//printAllSolutions(isZeroBased);
+			//}
 
-			std::cout << "solutions found: " << solutions.size() << std::endl;
-			solutions.clear();
+			//std::cout << "solutions found: " << solutions.size() << std::endl;
+			//solutions.clear();
 		}
 		else {	//wasn't a file, probably sudoku? absolutely not /help or something
 			std::cout << "argument: " << argument << std::endl;
@@ -341,11 +349,11 @@ int main(int argc, char *argv[]) {
 
 			bool isZeroBased = isZeroBasedString(argument);
 			sudokuGrid sudokuToSolve = getSudokuFromString(argument, isZeroBased);
-			Node *list = createLinkedListFromSudoku(sudokuToSolve);
-			search(list);
+			//Node *list = createLinkedListFromSudoku(sudokuToSolve);
+			//search(list);
 
-			printAllSolutions(isZeroBased);
-			deleteLinkedList(list);
+			//printAllSolutions(isZeroBased);
+			//deleteLinkedList(list);
 
 			auto endTime = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<double> programDuration = endTime - startTime;

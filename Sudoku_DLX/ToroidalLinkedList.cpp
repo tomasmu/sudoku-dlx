@@ -5,6 +5,7 @@
 #include "Sudoku.h"
 
 ToroidalLinkedList::ToroidalLinkedList(sudokuGrid sudoku) {
+	initList(sudoku);
 }
 
 void ToroidalLinkedList::initList(sudokuGrid sudoku) {
@@ -79,7 +80,7 @@ void ToroidalLinkedList::search() {
 	colHead->uncoverColumnAndRows();
 }
 
-void ToroidalLinkedList::solve(const unsigned int maxSolutions = 1) {
+void ToroidalLinkedList::solve(const unsigned int maxSolutions) {
 	_maxSolutions = maxSolutions == 0
 					? std::numeric_limits<const unsigned int>::max()
 					: maxSolutions;
