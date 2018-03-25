@@ -1,15 +1,9 @@
 #include "stdafx.h"
-
-#include "ConstraintMatrix.h"
 #include "ToroidalLinkedList.h"
-#include "Sudoku.h"
+#include "ConstraintMatrix.h"
 
-ToroidalLinkedList::ToroidalLinkedList(sudokuGrid sudoku) {
-	initList(sudoku);
-}
-
-void ToroidalLinkedList::initList(sudokuGrid sudoku) {
-	ConstraintMatrix constraintMatrix(sudoku);
+ToroidalLinkedList::ToroidalLinkedList(std::vector<std::vector<int>> input) {
+	ConstraintMatrix constraintMatrix(input);
 	const int rowSize = constraintMatrix.rows();
 	const int colSize = constraintMatrix.cols();
 
@@ -62,7 +56,7 @@ void ToroidalLinkedList::search() {
 		_guesses.push_back(dataRow);
 
 		//cover columns with intersecting rows
-		for (Node *dataCol = dataRow->right; dataCol != dataRow; dataCol = dataCol->right) //crt{5011, 376 bytes}
+		for (Node *dataCol = dataRow->right; dataCol != dataRow; dataCol = dataCol->right)
 			dataCol->columnHeader->coverColumnAndRows();
 
 		//with conditional recursion instead of aborting, we can backtrack and leave original list intact

@@ -20,108 +20,7 @@
 	#define new DEBUG_NEW
 #endif
 
-//solution solutionGuesses;	//global :(
-//solutionList solutions;		//variables :(
-
-//Node *findMinColumn(Node *columnRoot) {
-//	Node *min = columnRoot->right;
-//	for (Node *colHead = min->right; colHead != columnRoot; colHead = colHead->right)
-//		if (colHead->count < min->count)
-//			min = colHead;
-//
-//	return min;
-//}
-
-//void search(Node *columnRoot)
-//{
-//	//column list is empty, we have found a solution
-//	if (columnRoot->right == columnRoot) {
-//		solutions.push_back(solutionGuesses);
-//		return;	//crt{5012, 48 bytes}
-//	}
-//
-//	Node *colHead = findMinColumn(columnRoot);
-//
-//	if (colHead->count == 0)	//unsolvable, backtrack
-//		return;
-//
-//	//cover column
-//	colHead->coverColumnAndRows();
-//
-//	//loop vertical nodes
-//	for (Node *dataRow = colHead->down; dataRow != colHead; dataRow = dataRow->down) {
-//		//assume row is part of the solution, add to list
-//		solutionGuesses.push_back(dataRow);
-//
-//		//cover columns with intersecting rows
-//		for (Node *dataCol = dataRow->right; dataCol != dataRow; dataCol = dataCol->right) //crt{5011, 376 bytes}
-//			dataCol->columnHeader->coverColumnAndRows();
-//
-//		//with conditional recursion, instead of aborting, we backtrack and leave original list intact
-//		//then we can safely delete all nodes from memory
-//		if (solutions.size() < MAX_SOLUTIONS)
-//			search(columnRoot);
-//		
-//		//backtrack
-//		for (Node *dataCol = dataRow->left; dataCol != dataRow; dataCol = dataCol->left)
-//			dataCol->columnHeader->uncoverColumnAndRows();
-//
-//		solutionGuesses.pop_back();
-//	}
-//
-//	colHead->uncoverColumnAndRows();
-//}
-
-//Node *createLinkedListFromSudoku(sudokuGrid sudoku) {
-//	ConstraintMatrix constraintMatrix(sudoku);
-//
-//	const int rowSize = constraintMatrix.rows();
-//	const int colSize = constraintMatrix.cols();
-//
-//	//root for column headers that will be returned
-//	Node *columnRoot = new Node(ROW_HEADER, COL_HEADER);
-//
-//	//create column header row
-//	for (int col = 0; col < colSize; col++) {
-//		Node *colHead = new Node(ROW_HEADER, col);
-//		columnRoot->AddHorizontalNode(*colHead);
-//	}
-//
-//	//create dataNode rows
-//	for (int row = 0; row < rowSize; row++) {
-//		//pretend first existing dataNode on each row is a row header, so we can append nodes horizontally
-//		Node *dataHead = nullptr;
-//		//create dataNodes rowwise
-//		for (Node *colHead = columnRoot->right; colHead != columnRoot; colHead = colHead->right) {
-//			//create data node if constraintMatrix says so
-//			if (constraintMatrix.at(row, colHead->colId) == HAS_VALUE) {
-//				Node *data = new Node(row, colHead->colId);
-//				if (dataHead == nullptr)
-//					dataHead = data;
-//				else
-//					dataHead->AddHorizontalNode(*data);
-//				
-//				colHead->AddVerticalDataNode(*data);
-//			}
-//		}
-//	}
-//
-//	return columnRoot;
-//}
-
-//avoid memory leaks :)
-//void deleteLinkedList(Node *list) {
-//	Node *deleteHead, *deleteData;
-//	for (Node *colHead = list->right; colHead != list; colHead = colHead->right, delete deleteHead) {
-//		deleteHead = colHead;
-//		for (Node *data = colHead->down; data != colHead; data = data->down, delete deleteData) {
-//			deleteData = data;
-//		}
-//	}
-//
-//	delete list;
-//}
-
+//moved
 sudokuGrid getSudokuFromSolution(std::vector<Node*> solution) {
 	const unsigned int gridSize = solution.size();
 	const int gridLength = (int)(sqrt(gridSize + 0.5));
@@ -141,6 +40,7 @@ sudokuGrid getSudokuFromSolution(std::vector<Node*> solution) {
 	return sudoku;
 }
 
+//moved
 char formatCellIntToChar(int digit, bool isZeroBased) {
 	if (digit == BLANK_CELL_VALUE)
 		return BLANK_CELL_CHAR;
@@ -150,12 +50,13 @@ char formatCellIntToChar(int digit, bool isZeroBased) {
 
 	if (digit >= 0 && digit <= 9)
 		return digit + '0';
-	else if (digit >= 10 && digit <= 'Z' + 10)
+	else if (digit >= 10 && digit <= 'Z' - 'A' + 10)
 		return digit - 10 + 'A';
 
 	return '?';
 }
 
+//moved
 int formatCellCharToInt(char digit, bool isZeroBased) {
 	if (digit == BLANK_CELL_CHAR)
 		return BLANK_CELL_VALUE;
@@ -170,6 +71,7 @@ int formatCellCharToInt(char digit, bool isZeroBased) {
 	return '?';
 }
 
+//moved
 sudokuGrid getSudokuFromString(const char *sudokuString, bool isZeroBased) {
 	int gridLength = (int)(sqrt(strlen(sudokuString)) + 0.5);
 	int boxLength = (int)(sqrt(gridLength) + 0.5);
@@ -190,6 +92,7 @@ sudokuGrid getSudokuFromString(const char *sudokuString, bool isZeroBased) {
 	return sudoku;
 }
 
+//moved
 std::string getSudokuAsString(sudokuGrid sudoku, bool isZeroBased) {
 	const int length = sudoku.size();
 	std::string result = "";
@@ -203,32 +106,33 @@ std::string getSudokuAsString(sudokuGrid sudoku, bool isZeroBased) {
 	return result;
 }
 
-void printSudoku(sudokuGrid sudoku, const bool isZeroBased) {
-	const int gridLength = sudoku.size();
-	const int boxLength = (int)(sqrt(gridLength) + 0.5);
-
-	const int drawGridWidth = 2 * boxLength * (boxLength + 1) + 1;
-	const std::string *gridLine = new std::string(drawGridWidth, '-');
-
-	for (int row = 0; row < gridLength; row++) {
-		if (row % boxLength == 0)
-			std::cout << gridLine->c_str() << std::endl;
-
-		for (int col = 0; col < gridLength; col++) {
-			if (col % boxLength == 0)
-				std::cout << "| ";
-
-			int cellValue = sudoku[row][col];
-			char charValue = formatCellIntToChar(cellValue, isZeroBased);
-			std::cout << charValue << " ";
-		}
-
-		std::cout << "|" << std::endl;
-	}
-
-	std::cout << gridLine->c_str() << std::endl;
-	delete gridLine;
-}
+//moved
+//void printSudoku(sudokuGrid sudoku, const bool isZeroBased) {
+//	const int gridLength = sudoku.size();
+//	const int boxLength = (int)(sqrt(gridLength) + 0.5);
+//
+//	const int drawGridWidth = 2 * boxLength * (boxLength + 1) + 1;
+//	const std::string *gridLine = new std::string(drawGridWidth, '-');
+//
+//	for (int row = 0; row < gridLength; row++) {
+//		if (row % boxLength == 0)
+//			std::cout << gridLine->c_str() << std::endl;
+//
+//		for (int col = 0; col < gridLength; col++) {
+//			if (col % boxLength == 0)
+//				std::cout << "| ";
+//
+//			int cellValue = sudoku[row][col];
+//			char charValue = formatCellIntToChar(cellValue, isZeroBased);
+//			std::cout << charValue << " ";
+//		}
+//
+//		std::cout << "|" << std::endl;
+//	}
+//
+//	std::cout << gridLine->c_str() << std::endl;
+//	delete gridLine;
+//}
 
 //todo
 //void printAllSolutions(bool isZeroBased) {
@@ -239,21 +143,7 @@ void printSudoku(sudokuGrid sudoku, const bool isZeroBased) {
 //	}
 //}
 
-bool isSolved(sudokuGrid sudoku) {
-	//the set size for rows, cols, boxes should all be equal to sudoku size
-	return false;
-}
-
-bool isZeroBasedSudoku(sudokuGrid sudoku) {
-	//is considered zero based only if it contains a zero
-	for (unsigned int row = 0; row < sudoku.size(); row++)
-		for (unsigned int col = 0; col < sudoku.size(); col++)
-			if (sudoku[row][col] == 0)
-				return true;
-
-	return false;
-}
-
+//moved
 bool isZeroBasedString(const char* sudokuString) {
 	//is considered zero based only if it contains a zero
 	return strpbrk(sudokuString, "0") != 0;
@@ -262,24 +152,22 @@ bool isZeroBasedString(const char* sudokuString) {
 void solveFromFile(const char *filename) {
 	auto startTime = std::chrono::high_resolution_clock::now();
 	std::string answer, puzzle;
-	std::ifstream sudokuFile;
-	sudokuFile.open(filename);
+	std::ifstream inFile;
+	inFile.open(filename);
 	std::ofstream outFile("..\\sudokus-result.txt");
-	if (sudokuFile.is_open()) {
-		while (std::getline(sudokuFile, answer)) {
+	if (inFile.is_open()) {
+		while (std::getline(inFile, answer)) {
 			std::stringstream lineStream(answer);
 			getline(lineStream, answer, ';');
 			lineStream >> puzzle;
 
 			bool isZeroBased = isZeroBasedString(puzzle.c_str());
 			sudokuGrid sudokuToSolve = getSudokuFromString(puzzle.c_str(), isZeroBased);
-			//Node *list = createLinkedListFromSudoku(sudokuToSolve);
-			//search(list);
 
 			//temp
 			auto test = new ToroidalLinkedList(sudokuToSolve);
 			test->solve(2);
-			auto solutions = test->_solutions;
+			solutionList solutions = test->_solutions;
 
 			if (solutions.size() > 0) {
 				sudokuGrid solved = getSudokuFromSolution(solutions[solutions.size() - 1]);
@@ -291,14 +179,11 @@ void solveFromFile(const char *filename) {
 				std::cout << "error: " << puzzle.c_str() << std::endl;
 			}
 
-			//solutionGuesses.clear();
-			//solutions.clear();
-			//deleteLinkedList(list);
 			delete test;
 		}
 	}
 
-	sudokuFile.close();
+	inFile.close();
 	outFile.close();
 
 	auto endTime = std::chrono::high_resolution_clock::now();
@@ -334,14 +219,6 @@ int main(int argc, char *argv[]) {
 		const char *argument = argv[1];
 		if (isFilePath(argument)) {
 			solveFromFile(argument);
-
-			//if (solutions.size() > 0) {
-			//	//bool isZeroBased = isZeroBasedSudoku(getSudokuFromSolution(solutionList[0]));
-			//	//printAllSolutions(isZeroBased);
-			//}
-
-			//std::cout << "solutions found: " << solutions.size() << std::endl;
-			//solutions.clear();
 		}
 		else {	//wasn't a file, probably sudoku? absolutely not /help or something
 			std::cout << "argument: " << argument << std::endl;
@@ -349,11 +226,6 @@ int main(int argc, char *argv[]) {
 
 			bool isZeroBased = isZeroBasedString(argument);
 			sudokuGrid sudokuToSolve = getSudokuFromString(argument, isZeroBased);
-			//Node *list = createLinkedListFromSudoku(sudokuToSolve);
-			//search(list);
-
-			//printAllSolutions(isZeroBased);
-			//deleteLinkedList(list);
 
 			auto endTime = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<double> programDuration = endTime - startTime;
