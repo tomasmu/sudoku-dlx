@@ -1,15 +1,10 @@
 #include "stdafx.h"
-#include <vector>
 #include <iostream>
-#include <set>
 #include <chrono>
 #include <fstream>
 #include <sstream>
 
-#include "Node.h"
 #include "Sudoku.h"
-#include "ConstraintMatrix.h"
-#include "ToroidalLinkedList.h"
 
 //memory leak analysis
 #define _CRTDBG_MAP_ALLOC
@@ -20,165 +15,21 @@
 	#define new DEBUG_NEW
 #endif
 
-//moved
-sudokuGrid getSudokuFromSolution(std::vector<Node*> solution) {
-	const unsigned int gridSize = solution.size();
-	const int gridLength = (int)(sqrt(gridSize + 0.5));
-	const int base = gridLength;
-	sudokuGrid sudoku(gridLength, sudokuRow(gridLength, BLANK_CELL_VALUE));
-
-	for (unsigned int i = 0; i < gridSize; i++) {
-		int temp = solution[i]->rowId;
-
-		int row = temp / (base * base);
-		int col = temp / base % base;
-		int num = temp % base;
-
-		sudoku[row][col] = num;
-	}
-
-	return sudoku;
-}
-
-//moved
-char formatCellIntToChar(int digit, bool isZeroBased) {
-	if (digit == BLANK_CELL_VALUE)
-		return BLANK_CELL_CHAR;
-
-	if (isZeroBased == false)
-		digit++;
-
-	if (digit >= 0 && digit <= 9)
-		return digit + '0';
-	else if (digit >= 10 && digit <= 'Z' - 'A' + 10)
-		return digit - 10 + 'A';
-
-	return '?';
-}
-
-//moved
-int formatCellCharToInt(char digit, bool isZeroBased) {
-	if (digit == BLANK_CELL_CHAR)
-		return BLANK_CELL_VALUE;
-
-	int offset = isZeroBased == false ? -1 : 0;
-
-	if (digit >= '0' && digit <= '9')
-		return digit - '0' + offset;
-	else if (digit >= 'A' && digit <= 'Z')
-		return digit + 10 - 'A' + offset;
-
-	return '?';
-}
-
-//moved
-sudokuGrid getSudokuFromString(const char *sudokuString, bool isZeroBased) {
-	int gridLength = (int)(sqrt(strlen(sudokuString)) + 0.5);
-	int boxLength = (int)(sqrt(gridLength) + 0.5);
-	if (boxLength * boxLength * boxLength * boxLength != strlen(sudokuString)) {
-		std::cout << "WARNING! Input string is " << strlen(sudokuString) << " characters long, and not on the form n^4" << std::endl;
-	}
-	sudokuGrid sudoku(gridLength, sudokuRow(gridLength, BLANK_CELL_VALUE));
-
-	for (int row = 0; row < gridLength; row++) {
-		for (int col = 0; col < gridLength; col++) {
-			int strIndex = row * gridLength + col;
-			char charValue = sudokuString[strIndex];
-			int cellValue = formatCellCharToInt(charValue, isZeroBased);
-			sudoku[row][col] = cellValue;
-		}
-	}
-
-	return sudoku;
-}
-
-//moved
-std::string getSudokuAsString(sudokuGrid sudoku, bool isZeroBased) {
-	const int length = sudoku.size();
-	std::string result = "";
-	for (int row = 0; row < length; row++) {
-		for (int col = 0; col < length; col++) {
-			char charValue = formatCellIntToChar(sudoku[row][col], isZeroBased);
-			result += charValue;
-		}
-	}
-
-	return result;
-}
-
-//moved
-//void printSudoku(sudokuGrid sudoku, const bool isZeroBased) {
-//	const int gridLength = sudoku.size();
-//	const int boxLength = (int)(sqrt(gridLength) + 0.5);
-//
-//	const int drawGridWidth = 2 * boxLength * (boxLength + 1) + 1;
-//	const std::string *gridLine = new std::string(drawGridWidth, '-');
-//
-//	for (int row = 0; row < gridLength; row++) {
-//		if (row % boxLength == 0)
-//			std::cout << gridLine->c_str() << std::endl;
-//
-//		for (int col = 0; col < gridLength; col++) {
-//			if (col % boxLength == 0)
-//				std::cout << "| ";
-//
-//			int cellValue = sudoku[row][col];
-//			char charValue = formatCellIntToChar(cellValue, isZeroBased);
-//			std::cout << charValue << " ";
-//		}
-//
-//		std::cout << "|" << std::endl;
-//	}
-//
-//	std::cout << gridLine->c_str() << std::endl;
-//	delete gridLine;
-//}
-
-//todo
-//void printAllSolutions(bool isZeroBased) {
-//	std::cout << "solutions found: " << solutions.size() << std::endl;
-//	for (unsigned int i = 0; i < solutions.size() && solutions.size() != 0; i++) {
-//		std::cout << "printing solution [" << i << "]" << std::endl;
-//		printSudoku(getSudokuFromSolution(solutions[i]), isZeroBased);
-//	}
-//}
-
-//moved
-bool isZeroBasedString(const char* sudokuString) {
-	//is considered zero based only if it contains a zero
-	return strpbrk(sudokuString, "0") != 0;
-}
-
 void solveFromFile(const char *filename) {
 	auto startTime = std::chrono::high_resolution_clock::now();
 	std::string answer, puzzle;
+	std::ofstream outFile("..\\sudokus-result.txt");
 	std::ifstream inFile;
 	inFile.open(filename);
-	std::ofstream outFile("..\\sudokus-result.txt");
 	if (inFile.is_open()) {
 		while (std::getline(inFile, answer)) {
 			std::stringstream lineStream(answer);
 			getline(lineStream, answer, ';');
 			lineStream >> puzzle;
 
-			bool isZeroBased = isZeroBasedString(puzzle.c_str());
-			sudokuGrid sudokuToSolve = getSudokuFromString(puzzle.c_str(), isZeroBased);
-
-			//temp
-			auto test = new ToroidalLinkedList(sudokuToSolve);
-			test->solve(2);
-			solutionList solutions = test->_solutions;
-
-			if (solutions.size() > 0) {
-				sudokuGrid solved = getSudokuFromSolution(solutions[solutions.size() - 1]);
-				std::string solvedAsString = getSudokuAsString(solved, isZeroBased);
-				std::string originalPuzzle = getSudokuAsString(sudokuToSolve, isZeroBased);
-				outFile << solvedAsString << ";" << originalPuzzle << std::endl;
-			}
-			else {
-				std::cout << "error: " << puzzle.c_str() << std::endl;
-			}
-
+			auto test = new Sudoku(puzzle.c_str());
+			test->solve();
+			test->print();
 			delete test;
 		}
 	}
@@ -204,10 +55,7 @@ int main(int argc, char *argv[]) {
 	crtFlag |= _CRTDBG_LEAK_CHECK_DF;
 	_CrtSetDbgFlag(crtFlag);
 #ifdef _DEBUG
-	//crt {160, 8 bytes}, {159, 8 bytes} - todo: not found, investigate later
-	//crt {5011, 376 bytes, solutionGuesses?}, {5012, 16 bytes, solutionList?} - todo: investigate after restructuring
-	//_crtBreakAlloc = 159;
-	_crtBreakAlloc = 999999;
+	_crtBreakAlloc = 48763;	//memory_leak_test
 #endif // _DEBUG
 	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
 
@@ -224,8 +72,8 @@ int main(int argc, char *argv[]) {
 			std::cout << "argument: " << argument << std::endl;
 			auto startTime = std::chrono::high_resolution_clock::now();
 
-			bool isZeroBased = isZeroBasedString(argument);
-			sudokuGrid sudokuToSolve = getSudokuFromString(argument, isZeroBased);
+			//bool isZeroBased = isZeroBasedString(argument);
+			//sudokuGrid sudokuToSolve = getSudokuFromString(argument, isZeroBased);
 
 			auto endTime = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<double> programDuration = endTime - startTime;
@@ -282,6 +130,8 @@ int main(int argc, char *argv[]) {
 	//	system("pause");	//windows
 	//	//system("read");		//mac/linux
 	//}
+
+	//auto memory_leak_test = new std::string();
 
 	_CrtDumpMemoryLeaks();
 

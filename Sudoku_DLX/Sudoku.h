@@ -13,9 +13,9 @@ const char BLANK_CELL_CHAR = '.';	//remove later
 
 class Sudoku {
 public:
-	Sudoku(char *sudoku);
+	Sudoku(const char *sudoku);
 	void solve(const int maxSolutions = 1);
-	void printAll();
+	void print(const int count = 1);
 	int rowLength();
 	int colLength();
 	int boxLength();
@@ -27,7 +27,7 @@ public:
 private:
 	sudokuGrid _grid;
 	sudokuList _solutions;
-	char* _puzzle;
+	const char* _puzzle;
 	
 	int _rowLength;
 	int _colLength;

@@ -4,7 +4,7 @@
 #include <iostream>
 #include "Sudoku.h"
 
-Sudoku::Sudoku(char *sudoku) {
+Sudoku::Sudoku(const char *sudoku) {
 	_puzzle = sudoku;
 
 	_boxLength = (int)sqrt(sqrt(strlen(sudoku)));
@@ -14,6 +14,7 @@ Sudoku::Sudoku(char *sudoku) {
 
 	_rowLength = _boxLength * _boxLength;
 	_colLength = _rowLength;
+
 	_grid = sudokuGrid(_rowLength, sudokuRow(_colLength, BLANK_CELL_VALUE));
 	_isZeroBased = isZeroBased(sudoku);
 
@@ -59,6 +60,17 @@ std::string Sudoku::toString() {
 }
 
 void Sudoku::solve(int maxSolutions) {
+	_solutions.clear();
+
+	ToroidalLinkedList *list = new ToroidalLinkedList(_grid);
+	list->solve(2);
+
+	for (int i = 0; i < list->_solutions.size(); i++) {
+		sudokuGrid sudoku = getSudoku(list->_solutions[i]);
+		_solutions.push_back(sudoku);
+	}
+
+	delete list;
 }
 
 void Sudoku::printGrid(sudokuGrid sudoku) {
@@ -85,12 +97,12 @@ void Sudoku::printGrid(sudokuGrid sudoku) {
 	delete gridLine;
 }
 
-void Sudoku::printAll() {
+void Sudoku::print(const int count) {
 	std::cout << "solutions found: " << _solutions.size() << std::endl;
 	if (_solutions.size() <= 0)
 		return;
 
-	for (unsigned int i = 0; i < _solutions.size(); i++) {
+	for (unsigned int i = 0; i < _solutions.size() && i < count; i++) {
 		std::cout << "printing solution [" << i << "]" << std::endl;
 		printGrid(_solutions[i]);
 	}
