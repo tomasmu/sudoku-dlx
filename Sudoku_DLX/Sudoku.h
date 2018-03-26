@@ -8,14 +8,15 @@ typedef std::vector<sudokuCell> sudokuRow;
 typedef std::vector<sudokuRow> sudokuGrid;
 typedef std::vector<sudokuGrid> sudokuList;
 
-const int BLANK_CELL_VALUE = -1;	//remove later
-const char BLANK_CELL_CHAR = '.';	//remove later
+const int BLANK_CELL_VALUE = -1;
+const char BLANK_CELL_CHAR = '.';
 
 class Sudoku {
 public:
 	Sudoku(const char *sudoku);
 	void solve(const int maxSolutions = 1);
-	void print(const int count = 1);
+	void printSolution(const unsigned int count = 1);
+	void printOriginal();
 	int rowLength();
 	int colLength();
 	int boxLength();
@@ -23,11 +24,13 @@ public:
 	sudokuCell at(const int index);
 	sudokuCell at(const int row, const int col);
 	bool isSolved();
+	std::string getOriginal();
+	std::string getSolution(unsigned int index = 0);
 
 private:
 	sudokuGrid _grid;
 	sudokuList _solutions;
-	const char* _puzzle;
+	const char* _original;
 	
 	int _rowLength;
 	int _colLength;
@@ -40,10 +43,6 @@ private:
 	bool isZeroBased(sudokuGrid sudoku);
 	char cellToChar(sudokuCell digit);
 	sudokuCell charToCell(char digit);
-	std::string toString();
 	sudokuGrid getSudoku(solution sol);
 	void printGrid(sudokuGrid suodoku);
-
-	const int BLANK_CELL_VALUE = -1;
-	const char BLANK_CELL_CHAR = '.';
 };

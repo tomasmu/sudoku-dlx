@@ -12,7 +12,7 @@ public:
 	~ToroidalLinkedList();
 	void solve(const unsigned int maxSolutions = 1);
 	
-	solutionList _solutions;
+	solutionList _solutions;	//todo
 private:
 	Node *_columnRoot;
 	solution _guesses;

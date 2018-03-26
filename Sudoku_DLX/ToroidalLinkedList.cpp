@@ -36,6 +36,7 @@ ToroidalLinkedList::ToroidalLinkedList(std::vector<std::vector<int>> input) {
 	}
 }
 
+//this is "Algorithm DLX" (Algorithm X implemented in terms of Dancing Links)
 void ToroidalLinkedList::search() {
 	//column list is empty, we have found a solution
 	if (_columnRoot->right == _columnRoot) {

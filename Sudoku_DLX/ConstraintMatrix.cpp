@@ -2,22 +2,12 @@
 #include "ConstraintMatrix.h"
 #include "Sudoku.h"
 
-//ConstraintMatrix::ConstraintMatrix(Sudoku sudoku) {
 ConstraintMatrix::ConstraintMatrix(sudokuGrid sudoku) {
-	initMatrix(sudoku);
-}
-
-//void ConstraintMatrix::initMatrix(Sudoku sudoku) {	//implement Sudoku
-void ConstraintMatrix::initMatrix(sudokuGrid sudoku) {
 	//most of these variables are for pedagogic reasons
 	//e.g.: rowLength, colLength, and digits will always be equal; but makes the code easier to understand
 	const int rowLength = sudoku.size();
 	const int colLength = sudoku[0].size();
-	//const int rowLength = sudoku.rowLength();
-	//const int colLength = sudoku.colLength();
-	//const int boxLength = sudoku.boxLength();
-	//const int cellCount = sudoku.cellCount();
-	const int boxLength = (int)(sqrt(rowLength) + 0.5);
+	const int boxLength = (int)(sqrt(rowLength));
 	const int cellCount = rowLength * colLength;
 	const int digits = rowLength;
 
@@ -44,8 +34,8 @@ void ConstraintMatrix::initMatrix(sudokuGrid sudoku) {
 					int box = (row / boxLength) * boxLength + (col / boxLength);
 					int boxIndex = boxOffset + box * digits + num;
 
-					int candidateIndex = (row * digits * digits) + (col * digits) + num;
 					//four constraints per row
+					int candidateIndex = (row * digits * digits) + (col * digits) + num;
 					_matrix[candidateIndex][cellIndex] = HAS_VALUE;
 					_matrix[candidateIndex][rowIndex] = HAS_VALUE;
 					_matrix[candidateIndex][colIndex] = HAS_VALUE;
