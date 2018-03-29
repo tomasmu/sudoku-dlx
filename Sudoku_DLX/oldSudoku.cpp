@@ -33,8 +33,8 @@ void solveFromFile(const char *filename) {
 			//sudoku.printSolution();
 
 			std::string solved = sudoku.getSolution();
-			std::string original = sudoku.getOriginal();
-			outFile << solved << ";" << original << std::endl;
+			//std::string original = sudoku.getOriginal();
+			outFile << solved << ";" << puzzle << std::endl;
 		}
 	}
 
