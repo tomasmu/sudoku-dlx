@@ -19,7 +19,7 @@ void solveFromFile(const char *filename) {
 	std::cout << "solving from file: " << filename << std::endl;
 	auto startTime = std::chrono::high_resolution_clock::now();
 	std::string answer, puzzle;
-	std::ofstream outFile("..\\sudokus-result.txt");
+	std::ofstream outFile("..\\files\\sudokus-result.txt");
 	std::ifstream inFile;
 	inFile.open(filename);
 	if (inFile.is_open()) {
@@ -63,7 +63,6 @@ int main(int argc, char *argv[]) {
 #endif // _DEBUG
 	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
 
-	std::cout << "hello world!" << std::endl;
 	if (argc > 1) {
 		//try open file argv[1] and read all the sudokus
 		//if file isn't found, try parse it as a sudoku string

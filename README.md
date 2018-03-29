@@ -1,5 +1,5 @@
-# sudoku-dlx
-Sudoku solver, finds solutions to the exact cover problem using Algorithm X, as described by Donald Knuth in his Dancing Links paper:
+# sudoku-dlx - sudoku solver
+Finds solutions to the exact cover problem using Algorithm X, as described by Donald Knuth in his Dancing Links paper:
 https://arxiv.org/pdf/cs/0011047.pdf
 
 Short summary:
