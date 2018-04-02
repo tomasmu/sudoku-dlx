@@ -46,6 +46,44 @@ ConstraintMatrix::ConstraintMatrix(sudokuGrid sudoku) {
 	}
 }
 
+//ConstraintMatrix::ConstraintMatrix(Sudoku sudoku) {
+//	const int sudokuConstraints = 4;
+//	const int cellOffset = 0 * sudoku.cellCount();
+//	const int rowOffset = 1 * sudoku.cellCount();
+//	const int colOffset = 2 * sudoku.cellCount();
+//	const int boxOffset = 3 * sudoku.cellCount();
+//
+//	const int digits = sudoku.rowLength();
+//	const int candidateRowCount = digits * sudoku.cellCount();
+//	const int constraintColCount = sudokuConstraints * sudoku.cellCount();
+//	_matrix = matrixGrid(candidateRowCount, matrixRow(constraintColCount, NO_VALUE));
+//
+//	//add constraints
+//	for (int row = 0; row < sudoku.rowLength(); row++) {
+//		for (int col = 0; col < sudoku.colLength(); col++) {
+//			for (int num = 0; num < digits; num++) {
+//				//add clues only if we have a blank, or when we have the correct clue
+//				//todo: isEmptyCell(row, col)
+//				if (sudoku.at(row, col) == BLANK_CELL_VALUE || sudoku.at(row, col) == num) {
+//					//map each constraint to a unique value (offset + 0..cellCount-1)
+//					int cellIndex = cellOffset + row * digits + col;
+//					int rowIndex = rowOffset + row * digits + num;
+//					int colIndex = colOffset + col * digits + num;
+//					int box = (row / sudoku.boxLength()) * sudoku.boxLength() + (col / sudoku.boxLength());
+//					int boxIndex = boxOffset + box * digits + num;
+//
+//					//four constraints per row
+//					int candidateIndex = (row * digits * digits) + (col * digits) + num;
+//					_matrix[candidateIndex][cellIndex] = HAS_VALUE;
+//					_matrix[candidateIndex][rowIndex] = HAS_VALUE;
+//					_matrix[candidateIndex][colIndex] = HAS_VALUE;
+//					_matrix[candidateIndex][boxIndex] = HAS_VALUE;
+//				}
+//			}
+//		}
+//	}
+//}
+
 int ConstraintMatrix::rows() {
 	return _matrix.size();
 }

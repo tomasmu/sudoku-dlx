@@ -15,21 +15,22 @@ class Sudoku {
 public:
 	Sudoku(const char *sudoku);
 	void solve(const int maxSolutions = 1);
+	bool isSolved();
 	void printSolution(const unsigned int count = 1);
 	void printOriginal();
 	int rowLength();
 	int colLength();
 	int boxLength();
 	int cellCount();
-	sudokuCell at(const int index);
+	//sudokuCell at(const int index);
 	sudokuCell at(const int row, const int col);
-	bool isSolved();
 	std::string getOriginal();
 	std::string getSolution(unsigned int index = 0);
 
 private:
 	sudokuGrid _grid;
 	sudokuList _solutions;
+	//todo: add ConstraintMatrix here
 	const char* _original;
 	
 	int _rowLength;

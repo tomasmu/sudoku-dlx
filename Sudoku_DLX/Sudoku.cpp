@@ -1,19 +1,20 @@
 #include "stdafx.h"
 
-#include <vector>
 #include <iostream>
+#include <vector>
+#include <set>
 #include "Sudoku.h"
 
 Sudoku::Sudoku(const char *sudoku) {
 	_original = sudoku;
 
 	_boxLength = (int)sqrt(sqrt(strlen(sudoku)));
-	if (_boxLength * _boxLength * _boxLength * _boxLength != strlen(sudoku)) {
-		std::cout << "WARNING! Input string is " << strlen(sudoku) << " characters long, and not on the form n^4" << std::endl;
-	}
-
 	_rowLength = _boxLength * _boxLength;
 	_colLength = _rowLength;
+
+	if (_rowLength * _rowLength != strlen(sudoku)) {
+		std::cout << "WARNING! Input string is " << strlen(sudoku) << " characters long, and not on the form n^4" << std::endl;
+	}
 
 	_grid = sudokuGrid(_rowLength, sudokuRow(_colLength, BLANK_CELL_VALUE));
 	_isZeroBased = isZeroBased(sudoku);
@@ -29,12 +30,12 @@ Sudoku::Sudoku(const char *sudoku) {
 }
 
 sudokuGrid Sudoku::getSudoku(solution sol) {
-	const unsigned int gridSize = sol.size();
-	const int gridLength = (int)(sqrt(gridSize));
-	const int base = gridLength;
-	sudokuGrid sudoku(gridLength, sudokuRow(gridLength, BLANK_CELL_VALUE));
+	const unsigned int cellCount = sol.size();
+	const int dimension = (int)(sqrt(cellCount));
+	const int base = dimension;
+	sudokuGrid sudoku(dimension, sudokuRow(dimension, BLANK_CELL_VALUE));
 
-	for (unsigned int i = 0; i < gridSize; i++) {
+	for (unsigned int i = 0; i < cellCount; i++) {
 		const int temp = sol[i]->rowId;
 
 		const int row = temp / (base * base);
@@ -48,19 +49,16 @@ sudokuGrid Sudoku::getSudoku(solution sol) {
 }
 
 void Sudoku::solve(const int maxSolutions) {
-	_solutions.clear();
-
-	//ToroidalLinkedList *list = new ToroidalLinkedList(_grid);
-	//list->solve(maxSolutions);
+	//get all solutions
 	ToroidalLinkedList list(_grid);
 	list.solve(maxSolutions);
 
+	//convert solutions and save to list
+	_solutions.clear();
 	for (unsigned int i = 0; i < list._solutions.size(); i++) {
 		sudokuGrid sudoku = getSudoku(list._solutions[i]);
 		_solutions.push_back(sudoku);
 	}
-
-	//delete list;
 }
 
 void Sudoku::printGrid(sudokuGrid sudoku) {
@@ -84,7 +82,6 @@ void Sudoku::printGrid(sudokuGrid sudoku) {
 	}
 	
 	std::cout << gridLine.c_str() << std::endl;
-	//delete gridLine;
 }
 
 void Sudoku::printSolution(const unsigned int count) {
@@ -138,9 +135,9 @@ std::string Sudoku::getSolution(unsigned int index) {
 //	return _grid[index / _rowLength][index % _rowLength];
 //}
 
-//sudokuCell Sudoku::at(const int row, const int col) {
-//	return _grid[row][col];
-//}
+sudokuCell Sudoku::at(const int row, const int col) {
+	return _grid[row][col];
+}
 
 char Sudoku::cellToChar(sudokuCell digit) {
 	if (digit == BLANK_CELL_VALUE)
@@ -186,22 +183,44 @@ bool Sudoku::isZeroBased(sudokuGrid sudoku) {
 }
 
 bool Sudoku::isSolved() {
-	//todo
-	return false;
+	//solutions.size = {0, 1, >=2} = {unsolved, unique, ambiguous}
+	return _solutions.size() == 1;
+	//std::set<sudokuCell> rowDigits, colDigits, boxDigits;
+	//for (int row = 0; row < _rowLength; row++)
+	//{
+	//	rowDigits.clear();
+	//	colDigits.clear();
+	//	boxDigits.clear();
+	//	for (int col = 0; col < _colLength; col++) {
+	//		int box = (row / _rowLength) * _rowLength + (row % _boxLength);
+	//		boxDigits.insert(sudoku[box][col]);
+	//		rowDigits.insert(sudoku[row][col]);
+	//		colDigits.insert(sudoku[col][row]);
+	//	}
+	//	
+	//	if (rowDigits.size() != _rowLength)
+	//		return false;
+	//	if (colDigits.size() != _colLength)
+	//		return false;
+	//	if (boxDigits.size() != _rowLength)
+	//		return false;
+	//}
+
+	//return true;
 }
 
-//int Sudoku::rowLength() {
-//	return _rowLength;
-//}
-//
-//int Sudoku::colLength() {
-//	return _colLength;
-//}
-//
-//int Sudoku::boxLength() {
-//	return _boxLength;
-//}
-//
-//int Sudoku::cellCount() {
-//	return _cellCount;
-//}
+int Sudoku::rowLength() {
+	return _rowLength;
+}
+
+int Sudoku::colLength() {
+	return _colLength;
+}
+
+int Sudoku::boxLength() {
+	return _boxLength;
+}
+
+int Sudoku::cellCount() {
+	return _cellCount;
+}

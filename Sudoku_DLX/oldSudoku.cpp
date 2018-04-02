@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
 	const char* four_sudoku_55clues = "...9.....3.....2....F..C0....A.8.4.5.....9.............A..D....F..8............0.....5..........A.F............C.....D9..4....7.....0..E.........5.4.....7.B1D9....3.....1..5.4.....A..F........F.0.....8.A....E.....14.....2.5.8.......C.0..........973......1.";
 	const char* four_sudoku_54clues_ambiguous = ".........2.....1....E..BF....9.7.3.4.....8.............9..C....E..7............F.....4..........9.E............B.....C8..3....6.....F..D.........4.3.....6.A0C8....2.....0..4.3.....9..E........E.F.....7.9....D.....03.....1.4.7.......B.F..........862......0.";
 
-	bool canHasBenchmark = true;
+	bool canHasBenchmark = false;
 	if (canHasBenchmark) {
 		std::cout << "benchmarking.." << std::endl;
 		const char* sudokuToSolve = three_sudoku_17clues_worstBacktrackCase;
