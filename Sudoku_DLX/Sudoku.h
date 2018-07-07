@@ -27,6 +27,7 @@ public:
 	sudokuCell at(const int row, const int col);
 	std::string getOriginal();
 	std::string getSolution(unsigned int index = 0);
+	sudokuGrid getFirstSolution();
 
 private:
 	sudokuGrid _grid;

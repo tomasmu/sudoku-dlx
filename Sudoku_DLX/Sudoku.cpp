@@ -29,6 +29,10 @@ Sudoku::Sudoku(const char *sudoku) {
 	}
 }
 
+Sudoku::Sudoku(sudokuGrid grid) {
+	_grid = grid;
+}
+
 sudokuGrid Sudoku::getSudoku(solution sol) {
 	const unsigned int cellCount = sol.size();
 	const int dimension = (int)(sqrt(cellCount));
@@ -129,6 +133,10 @@ std::string Sudoku::getSolution(unsigned int index) {
 	}
 
 	return result;
+}
+
+sudokuGrid Sudoku::getFirstSolution() {
+	return _solutions[0];
 }
 
 //sudokuCell Sudoku::at(const int index) {
