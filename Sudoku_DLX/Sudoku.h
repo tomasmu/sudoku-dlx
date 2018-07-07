@@ -14,6 +14,7 @@ const char BLANK_CELL_CHAR = '.';
 class Sudoku {
 public:
 	Sudoku(const char *sudoku);
+	Sudoku(sudokuGrid grid);
 	void solve(const int maxSolutions = 1);
 	bool isSolved();
 	void printSolution(const unsigned int count = 1);
@@ -30,7 +31,8 @@ public:
 private:
 	sudokuGrid _grid;
 	sudokuList _solutions;
-	//todo: add ConstraintMatrix here
+	//todo: ConstraintMatrix _constraintMatrix;
+	//or: ToroidalLinkedList _toroidalLinkedList;	//uses ConstraintMatrix
 	const char* _original;
 	
 	int _rowLength;

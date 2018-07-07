@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "ConstraintMatrix.h"
-#include "Sudoku.h"
 
 ConstraintMatrix::ConstraintMatrix(sudokuGrid sudoku) {
 	//most of these variables are for pedagogic reasons

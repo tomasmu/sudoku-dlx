@@ -1,3 +1,5 @@
+#pragma once
+
 #include "stdafx.h"
 #include "ToroidalLinkedList.h"
 #include "ConstraintMatrix.h"
